@@ -68,6 +68,3 @@ Everything after `--` will be passed directly to nmap, giving you the full power
 -   `-f, --output-file`: Write output to file
 -   `-- [nmap flags]`: Use nmap directly with specified flags
 
-## License
-
-MIT
