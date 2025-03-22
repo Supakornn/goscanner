@@ -31,6 +31,18 @@
 
 ## Installation
 
+### Using Go Install (Recommended)
+
+```bash
+# Install the latest version
+go install github.com/supakornn/goscanner@latest
+
+# Or specify a version
+go install github.com/supakornn/goscanner@v.1.0
+```
+
+### From Source
+
 ```bash
 # Clone the repository
 git clone https://github.com/supakornn/goscanner.git
