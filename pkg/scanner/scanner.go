@@ -12,7 +12,18 @@ import (
 	"time"
 )
 
-// creates a new Scanner with default settings
+// New creates a new Scanner with default settings.
+// It configures a scanner with the specified target, timeout duration, and concurrency level.
+//
+// Parameters:
+//   - target: The host to scan (IP address or hostname)
+//   - timeout: The duration to wait for connections
+//   - concurrent: The number of concurrent scans to perform
+//
+// Example:
+//
+//	scanner := scanner.New("example.com", 50*time.Millisecond, 1000)
+//	result := scanner.ScanPort("tcp", 80)
 func New(target string, timeout time.Duration, concurrent int) *Scanner {
 	return &Scanner{
 		target:            target,
@@ -39,7 +50,23 @@ func New(target string, timeout time.Duration, concurrent int) *Scanner {
 	}
 }
 
-// creates a new Scanner with specified options
+// NewWithOptions creates a new Scanner with specified options.
+// This allows for more detailed configuration than the standard New constructor.
+//
+// Parameters:
+//   - target: The host to scan (IP address or hostname)
+//   - opts: A ScanOption struct containing all configuration options
+//
+// Example:
+//
+//	options := scanner.ScanOption{
+//	    Timeout:          50*time.Millisecond,
+//	    Concurrent:       5000,
+//	    Technique:        scanner.TechSYN,
+//	    BannerGrab:       true,
+//	    ServiceDetection: true,
+//	}
+//	scanner := scanner.NewWithOptions("example.com", options)
 func NewWithOptions(target string, opts ScanOption) *Scanner {
 	return &Scanner{
 		target:            target,
@@ -70,13 +97,30 @@ func NewWithOptions(target string, opts ScanOption) *Scanner {
 	}
 }
 
-// sets whether to show filtered ports in the results
+// SetShowFiltered configures whether to include filtered ports in the results.
+//
+// Parameters:
+//   - show: If true, filtered ports will be included in the scan results
 func (s *Scanner) SetShowFiltered(show bool) {
 	s.showFiltered = show
 }
 
-// checks if a port is open with enhanced options
-// used for detailed scanning after initial discovery
+// ScanPort checks if a port is open with enhanced options.
+// Used for detailed scanning after initial discovery.
+//
+// Parameters:
+//   - protocol: The protocol to use ("tcp" or "udp")
+//   - port: The port number to scan
+//
+// Returns:
+//   - ScanResult containing port status, service information, and banner if available
+//
+// Example:
+//
+//	result := scanner.ScanPort("tcp", 80)
+//	if result.State == "open" {
+//	    fmt.Printf("Port 80 is open running %s\n", result.Service)
+//	}
 func (s *Scanner) ScanPort(protocol string, port int) ScanResult {
 	result := ScanResult{Port: port, Protocol: protocol}
 	address := net.JoinHostPort(s.target, fmt.Sprintf("%d", port))
@@ -308,8 +352,23 @@ func (s *Scanner) TestHostAlive(host string) bool {
 	return false
 }
 
-// ultra fast scan port uses half-open connections for maximum throughput
-// critical: this is the core of the scanner's speed - optimized for performance
+// UltraFastScanPort performs an optimized high-speed port scan on a target host.
+// This is the core of the scanner's performance, using optimized connection techniques
+// to maximize scanning throughput.
+//
+// Parameters:
+//   - host: Target host IP address or hostname
+//   - port: Port number to scan
+//
+// Returns:
+//   - ScanResult containing the scan result with port state, service name, and timing information
+//
+// Example:
+//
+//	result := scanner.UltraFastScanPort("192.168.1.1", 80)
+//	if result.State == "open" {
+//	    fmt.Printf("Port 80 is open running %s service\n", result.Service)
+//	}
 func (s *Scanner) UltraFastScanPort(host string, port int) ScanResult {
 	result := ScanResult{
 		Port:     port,
@@ -367,9 +426,27 @@ func (s *Scanner) UltraFastScanPort(host string, port int) ScanResult {
 	return result
 }
 
-// scan range scans a range of ports with ultra-fast optimizations
-// important: this is the main entry point for port scanning operations
-// it skips host discovery by default and tries all ports directly
+// ScanRange scans a range of ports on the configured target host.
+// This is the main entry point for port scanning operations.
+// By default, it skips host discovery and attempts to connect to all ports directly
+// for maximum speed.
+//
+// Parameters:
+//   - protocol: Protocol to use ("tcp" or "udp")
+//   - startPort: First port in range to scan
+//   - endPort: Last port in range to scan
+//
+// Returns:
+//   - []ScanResult slice containing results for all ports in the specified range
+//
+// Example:
+//
+//	results := scanner.ScanRange("tcp", 1, 1000)
+//	for _, result := range results {
+//	    if result.State == "open" {
+//	        fmt.Printf("Port %d is open (%s)\n", result.Port, result.Service)
+//	    }
+//	}
 func (s *Scanner) ScanRange(protocol string, startPort, endPort int) []ScanResult {
 	startTime := time.Now()
 

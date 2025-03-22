@@ -1,28 +1,32 @@
+// Package scanner provides high-performance port scanning functionality
+// with support for multiple scan techniques, service detection, and banner grabbing.
+// It's designed for network security assessments, penetration testing, and system administration.
 package scanner
 
 import "time"
 
-// ScanTechnique represents the type of scanning technique
+// ScanTechnique represents the type of scanning technique used for port discovery
 type ScanTechnique int
 
 const (
-	// TCP connect scan
+	// TechConnect performs a full TCP connection (3-way handshake)
 	TechConnect ScanTechnique = iota
-	// SYN scan (half-open)
+	// TechSYN performs a SYN scan (half-open scanning)
 	TechSYN
-	// FIN scan
+	// TechFIN performs a FIN scan for firewall evasion
 	TechFIN
-	// XMAS scan
+	// TechXMAS performs a XMAS scan with FIN, URG, and PUSH flags set
 	TechXMAS
-	// NULL scan
+	// TechNULL performs a NULL scan with no flags set
 	TechNULL
-	// ACK scan
+	// TechACK performs an ACK scan to map firewall rulesets
 	TechACK
-	// UDP scan
+	// TechUDP performs UDP scanning for discovering UDP services
 	TechUDP
 )
 
-// Scanner represents a port scanner
+// Scanner represents a port scanner with configurable options
+// for timeout, concurrency, and various scanning techniques.
 type Scanner struct {
 	target            string
 	timeout           time.Duration
@@ -51,68 +55,72 @@ type Scanner struct {
 	Ports             []int // public for direct access
 }
 
-// represents the result of scanning a single port
+// ScanResult represents the result of scanning a single port.
+// It contains information about port state, service, version, and banner.
 type ScanResult struct {
-	Port     int
-	State    string
-	Service  string
-	Version  string
-	Protocol string
-	Banner   string
-	RTT      time.Duration
+	Port     int           // Port number
+	State    string        // Status of port: "open", "closed", or "filtered"
+	Service  string        // Identified service name
+	Version  string        // Service version if detected
+	Protocol string        // Protocol used (tcp/udp)
+	Banner   string        // Banner information retrieved
+	RTT      time.Duration // Round-trip time for the scan
 }
 
-// represents the result of scanning a single host
+// HostResult represents the result of scanning a single host,
+// including open/filtered/closed ports and host information.
 type HostResult struct {
-	IP            string
-	Hostname      []string
-	Status        string
-	OS            string
-	OSAccuracy    int
-	MAC           string
-	Vendor        string
-	OpenPorts     []ScanResult
-	FilteredPorts []ScanResult
-	ClosedPorts   []ScanResult
-	RTT           time.Duration
-	HopCount      int // Added for traceroute functionality
+	IP            string        // IP address of the host
+	Hostname      []string      // Resolved hostnames
+	Status        string        // Host status (up/down)
+	OS            string        // Detected operating system
+	OSAccuracy    int           // Accuracy of OS detection (percentage)
+	MAC           string        // MAC address if available
+	Vendor        string        // Hardware vendor based on MAC
+	OpenPorts     []ScanResult  // List of open ports
+	FilteredPorts []ScanResult  // List of filtered ports
+	ClosedPorts   []ScanResult  // List of closed ports
+	RTT           time.Duration // Round-trip time to host
+	HopCount      int           // Number of network hops to host
 }
 
-// represents a subnet scan
+// NetworkScan represents a subnet scan containing multiple host results
+// and overall statistics about the scan.
 type NetworkScan struct {
-	CIDR      string
-	Hosts     []HostResult
-	StartTime time.Time
-	EndTime   time.Time
-	Duration  time.Duration
-	HostsUp   int
-	HostsDown int
+	CIDR      string        // Target CIDR range
+	Hosts     []HostResult  // Results for each host
+	StartTime time.Time     // When the scan started
+	EndTime   time.Time     // When the scan completed
+	Duration  time.Duration // Total scan duration
+	HostsUp   int           // Number of hosts found up
+	HostsDown int           // Number of hosts found down
 }
 
-// represents options for the scanner
+// ScanOption represents options for configuring a scanner.
+// This struct is used when creating a new scanner with advanced options.
 type ScanOption struct {
-	Timeout           time.Duration
-	Concurrent        int
-	Technique         ScanTechnique
-	BannerGrab        bool
-	ServiceDetection  bool
-	OSDetection       bool
-	HostDiscovery     bool
-	OutputFormat      string
-	Verbose           bool
-	Debug             bool
-	TimingTemplate    int
-	FragmentPackets   bool
-	SourcePort        int
-	TTL               int
-	Decoys            string
-	ScriptScan        bool
-	Scripts           string
-	ScriptArgs        string
-	TraceRoute        bool
-	RandomTargets     bool
-	SkipHostDiscovery bool
-	ShowFiltered      bool
-	IPv4Only          bool // Force IPv4 only mode
-	Ports             []int
+	Timeout           time.Duration // Connection timeout
+	Concurrent        int           // Number of concurrent scans
+	Technique         ScanTechnique // Scan technique to use
+	BannerGrab        bool          // Whether to grab service banners
+	ServiceDetection  bool          // Whether to detect services
+	OSDetection       bool          // Whether to detect operating systems
+	HostDiscovery     bool          // Whether to perform host discovery
+	OutputFormat      string        // Output format (normal, json, xml)
+	Verbose           bool          // Verbose output
+	Debug             bool          // Debug output
+	TimingTemplate    int           // Timing template (0-5)
+	FragmentPackets   bool          // Whether to fragment packets
+	SourcePort        int           // Custom source port
+	TTL               int           // Time-to-live value
+	Decoys            string        // Decoy addresses to use
+	ScriptScan        bool          // Whether to run scripts
+	Scripts           string        // Scripts to run
+	ScriptArgs        string        // Script arguments
+	TraceRoute        bool          // Whether to perform traceroute
+	RandomTargets     bool          // Whether to randomize targets
+	SkipHostDiscovery bool          // Whether to skip host discovery
+	ShowFiltered      bool          // Whether to show filtered ports
+	IPv4Only          bool          // Force IPv4 only mode
+	Ports             []int         // Specific ports to scan
 }
