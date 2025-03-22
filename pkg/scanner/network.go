@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// ScanNetwork scans a network range (CIDR notation)
+// scans a network range (CIDR notation)
 func (s *Scanner) ScanNetwork(cidr string) *NetworkScan {
 	networkScan := &NetworkScan{
 		CIDR:      cidr,

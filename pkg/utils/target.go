@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// ParseTarget converts a hostname to an IP address
+// parse the hostname to an IP address
 func ParseTarget(target string) (string, error) {
 	if strings.Contains(target, "/") {
 		_, _, err := net.ParseCIDR(target)
@@ -33,9 +33,9 @@ func ParseTarget(target string) (string, error) {
 	return ips[0], nil
 }
 
-// ParsePortRange parses a port range string
+// parse the port range string
 func ParsePortRange(portsStr string) (start, end int, err error) {
-	// Handle comma-separated port list
+	// handle comma-separated port list
 	if strings.Contains(portsStr, ",") {
 		ports := []int{}
 		parts := strings.Split(portsStr, ",")
@@ -59,7 +59,7 @@ func ParsePortRange(portsStr string) (start, end int, err error) {
 		return min, max, nil
 	}
 
-	// Handle named port groups
+	// handle named port groups
 	if strings.HasPrefix(portsStr, "top-") {
 		numStr := strings.TrimPrefix(portsStr, "top-")
 		num, err := strconv.Atoi(numStr)
@@ -70,7 +70,7 @@ func ParsePortRange(portsStr string) (start, end int, err error) {
 		return 1, num, nil
 	}
 
-	// Check if it's a range
+	// check if it's a range
 	if strings.Contains(portsStr, "-") {
 		parts := strings.Split(portsStr, "-")
 		if len(parts) != 2 {
@@ -90,7 +90,7 @@ func ParsePortRange(portsStr string) (start, end int, err error) {
 		return start, end, nil
 	}
 
-	// Single port
+	// single port
 	port, err := strconv.Atoi(strings.TrimSpace(portsStr))
 	if err != nil {
 		return 0, 0, err
@@ -99,7 +99,7 @@ func ParsePortRange(portsStr string) (start, end int, err error) {
 	return port, port, nil
 }
 
-// ParseTargetSpec parses a target specification
+// parse the target specification
 func ParseTargetSpec(targetSpec string) ([]string, error) {
 	if strings.Contains(targetSpec, "/") {
 		return ExpandCIDR(targetSpec)
@@ -112,7 +112,7 @@ func ParseTargetSpec(targetSpec string) ([]string, error) {
 	return []string{targetSpec}, nil
 }
 
-// ExpandCIDR expands a CIDR notation to a list of IP addresses
+// expand the CIDR notation to a list of IP addresses
 func ExpandCIDR(cidrStr string) ([]string, error) {
 	ip, ipnet, err := net.ParseCIDR(cidrStr)
 	if err != nil {
@@ -131,7 +131,7 @@ func ExpandCIDR(cidrStr string) ([]string, error) {
 	return ips, nil
 }
 
-// ExpandIPRange expands an IP range to a list of IP addresses
+// expand the IP range to a list of IP addresses
 func ExpandIPRange(ipRange string) ([]string, error) {
 	parts := strings.Split(ipRange, "-")
 	if len(parts) != 2 {
@@ -164,7 +164,7 @@ func ExpandIPRange(ipRange string) ([]string, error) {
 	return ips, nil
 }
 
-// IncrementIP increments an IP address by 1
+// increment the IP address by 1
 func IncrementIP(ip net.IP) {
 	for j := len(ip) - 1; j >= 0; j-- {
 		ip[j]++
@@ -174,13 +174,13 @@ func IncrementIP(ip net.IP) {
 	}
 }
 
-// GenerateRandomIP generates a random IP address
+// generate a random IP address
 func GenerateRandomIP() string {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return fmt.Sprintf("%d.%d.%d.%d", r.Intn(256), r.Intn(256), r.Intn(256), r.Intn(256))
 }
 
-// ReadLinesFromFile reads lines from a file
+// read lines from a file
 func ReadLinesFromFile(filename string) ([]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {

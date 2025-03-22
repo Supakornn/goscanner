@@ -6,19 +6,19 @@ import "time"
 type ScanTechnique int
 
 const (
-	// TechConnect is a basic TCP connect scan
+	// TCP connect scan
 	TechConnect ScanTechnique = iota
-	// TechSYN is a SYN scan (half-open)
+	// SYN scan (half-open)
 	TechSYN
-	// TechFIN is a FIN scan
+	// FIN scan
 	TechFIN
-	// TechXMAS is a XMAS scan
+	// XMAS scan
 	TechXMAS
-	// TechNULL is a NULL scan
+	// NULL scan
 	TechNULL
-	// TechACK is an ACK scan
+	// ACK scan
 	TechACK
-	// TechUDP is a UDP scan
+	// UDP scan
 	TechUDP
 )
 
@@ -47,11 +47,11 @@ type Scanner struct {
 	randomTargets     bool
 	skipHostDiscovery bool
 	showFiltered      bool
-	ipv4Only          bool  // Force IPv4 scanning
-	Ports             []int // Public for direct access
+	ipv4Only          bool  // force IPv4 scanning
+	Ports             []int // public for direct access
 }
 
-// ScanResult represents the result of scanning a single port
+// represents the result of scanning a single port
 type ScanResult struct {
 	Port     int
 	State    string
@@ -62,7 +62,7 @@ type ScanResult struct {
 	RTT      time.Duration
 }
 
-// HostResult represents the result of scanning a single host
+// represents the result of scanning a single host
 type HostResult struct {
 	IP            string
 	Hostname      []string
@@ -78,7 +78,7 @@ type HostResult struct {
 	HopCount      int // Added for traceroute functionality
 }
 
-// NetworkScan represents a subnet scan
+// represents a subnet scan
 type NetworkScan struct {
 	CIDR      string
 	Hosts     []HostResult
@@ -89,7 +89,7 @@ type NetworkScan struct {
 	HostsDown int
 }
 
-// ScanOption represents options for the scanner
+// represents options for the scanner
 type ScanOption struct {
 	Timeout           time.Duration
 	Concurrent        int

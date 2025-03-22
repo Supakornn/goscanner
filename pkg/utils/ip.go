@@ -4,7 +4,7 @@ import (
 	"net"
 )
 
-// IsPrivateIP checks if an IP address is private
+// checks if an IP address is private
 func IsPrivateIP(ipStr string) bool {
 	ip := net.ParseIP(ipStr)
 	if ip == nil {
@@ -31,12 +31,12 @@ func IsPrivateIP(ipStr string) bool {
 	return false
 }
 
-// bytes4ToUint32 converts a 4-byte IP to uint32
+// convert a 4-byte IP to uint32
 func bytes4ToUint32(bytes []byte) uint32 {
 	return uint32(bytes[0])<<24 | uint32(bytes[1])<<16 | uint32(bytes[2])<<8 | uint32(bytes[3])
 }
 
-// GetLocalIPs returns all local IP addresses
+// get all local IP addresses
 func GetLocalIPs() ([]string, error) {
 	var ips []string
 

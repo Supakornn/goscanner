@@ -5,16 +5,14 @@ import (
 	"strings"
 )
 
-// canUseICMP checks if ICMP is available
+// checks if ICMP is available
 func canUseICMP() bool {
-	// In a real implementation, this would check for proper permissions
 	return true
 }
 
-// detectServiceVersion attempts to detect the service version from banner
+// detect the service version from banner
 func detectServiceVersion(service, banner string) string {
-	// Simple version detection based on banner
-	// In a real implementation, this would use regex patterns for each service
+	// simple version detection based on banner
 	if service == "http" || service == "https" {
 		if strings.Contains(banner, "Apache") {
 			return extractVersion(banner, "Apache/")
@@ -29,7 +27,7 @@ func detectServiceVersion(service, banner string) string {
 	return ""
 }
 
-// extractVersion extracts version number from a banner
+// extract the version number from a banner
 func extractVersion(banner, prefix string) string {
 	if idx := strings.Index(banner, prefix); idx >= 0 {
 		start := idx + len(prefix)
@@ -44,7 +42,7 @@ func extractVersion(banner, prefix string) string {
 	return ""
 }
 
-// incrementIP increments an IP address
+// increment the IP address
 func incrementIP(ip net.IP) {
 	for j := len(ip) - 1; j >= 0; j-- {
 		ip[j]++
@@ -54,7 +52,7 @@ func incrementIP(ip net.IP) {
 	}
 }
 
-// expandCIDR expands a CIDR notation to a list of IPs
+// expand the CIDR notation to a list of IPs
 func expandCIDR(cidr string) ([]string, error) {
 	ip, ipnet, err := net.ParseCIDR(cidr)
 	if err != nil {
@@ -66,7 +64,7 @@ func expandCIDR(cidr string) ([]string, error) {
 		ips = append(ips, ip.String())
 	}
 
-	// Remove network and broadcast address for IPv4
+	// remove the network and broadcast address for IPv4
 	if len(ips) > 2 {
 		return ips[1 : len(ips)-1], nil
 	}
@@ -74,7 +72,7 @@ func expandCIDR(cidr string) ([]string, error) {
 	return ips, nil
 }
 
-// getCommonPorts returns the N most common ports
+// get the most common ports
 func getCommonPorts(count int) []int {
 	commonPorts := []int{
 		21, 22, 23, 25, 53, 80, 110, 111, 135, 139, 143, 443, 445, 993, 995, 1723,
@@ -90,9 +88,8 @@ func getCommonPorts(count int) []int {
 	return commonPorts[:count]
 }
 
-// getServiceName returns a service name for a given port
+// get the service name for a given port
 func getServiceName(port int) string {
-	// Common TCP services
 	switch port {
 	case 20, 21:
 		return "ftp"
@@ -143,9 +140,8 @@ func getServiceName(port int) string {
 	}
 }
 
-// getUDPServiceName returns a service name for a UDP port
+// get the service name for a UDP port
 func getUDPServiceName(port int) string {
-	// Add special handling for common UDP services
 	switch port {
 	case 53:
 		return "domain"
@@ -166,6 +162,6 @@ func getUDPServiceName(port int) string {
 	case 1900:
 		return "upnp"
 	default:
-		return getServiceName(port) // Fall back to generic service name
+		return getServiceName(port)
 	}
 }

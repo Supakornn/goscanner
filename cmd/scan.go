@@ -11,7 +11,7 @@ import (
 	"github.com/supakornn/goscanner/pkg/utils"
 )
 
-// Handles target processing from command line or file
+// process targets from command line or file
 func processTargets() ([]string, error) {
 	if targetFile != "" {
 		return utils.ReadLinesFromFile(targetFile)
@@ -22,10 +22,10 @@ func processTargets() ([]string, error) {
 
 // buildScanOptions builds a ScanOption struct from command line flags
 func buildScanOptions() scanner.ScanOption {
-	// Convert timeout from milliseconds to time.Duration
+	// convert timeout to time.Duration
 	timeoutDuration := time.Duration(timeout) * time.Millisecond
 
-	// Build the scan options from all command line flags
+	// build scan options from all command line flags
 	scanOptions := scanner.ScanOption{
 		Timeout:           timeoutDuration,
 		Concurrent:        concurrent,
@@ -47,7 +47,7 @@ func buildScanOptions() scanner.ScanOption {
 		IPv4Only:          ipv4Only,
 	}
 
-	// Set the scan technique based on command line flags
+	// set scan technique based on command line flags
 	if scanTechnique != "" {
 		switch strings.ToLower(scanTechnique) {
 		case "connect":
@@ -69,29 +69,23 @@ func buildScanOptions() scanner.ScanOption {
 		}
 	}
 
-	// Set decoys if provided
+	// set decoys if provided
 	if decoys != "" {
-		scanOptions.Decoys = decoys // Now expecting a string, not a slice
+		scanOptions.Decoys = decoys // now expecting a string, not a slice
 	}
 
-	// Set script options if provided
+	// set script options if provided
 	if scriptScan {
 		scanOptions.ScriptScan = true
 		if scripts != "" {
-			scanOptions.Scripts = scripts // Now expecting a string, not a slice
+			scanOptions.Scripts = scripts // now expecting a string, not a slice
 		}
 	}
 
 	return scanOptions
 }
 
-// printScanInfo prints information about the scan
-func printScanInfo(targets []string, startPort, endPort int) {
-	// All necessary header information is already displayed in the banner
-	// Just continue without printing duplicate information
-}
-
-// Performs a scan on a single host
+// perform a scan on a single host
 func performSingleHostScan(target string, startPort, endPort int, options scanner.ScanOption) {
 	startTime := time.Now()
 
@@ -101,13 +95,11 @@ func performSingleHostScan(target string, startPort, endPort int, options scanne
 		return
 	}
 
-	// Use the exact ports list from options if available
+	// use the exact ports list from options if available
 	portsToScan := options.Ports
 	numPorts := len(portsToScan)
-	if numPorts == 0 {
-		numPorts = endPort - startPort + 1
-	}
 
+	// show the actual number of ports being scanned
 	fmt.Printf("Scanning %s (%s) [%d ports]\n", target, ip, numPorts)
 
 	s := scanner.NewWithOptions(ip, options)
@@ -117,9 +109,9 @@ func performSingleHostScan(target string, startPort, endPort int, options scanne
 	var openPorts []int
 
 	if skipHostDiscovery {
-		// Use user-specified ports if available
+		// use user-specified ports if available
 		if len(portsToScan) > 0 {
-			// Scan only the user-specified ports
+			// scan only the user-specified ports
 			results = make([]scanner.ScanResult, 0, len(portsToScan))
 			for _, port := range portsToScan {
 				// Always use the ultra-fast scan for initial detection
@@ -128,13 +120,27 @@ func performSingleHostScan(target string, startPort, endPort int, options scanne
 				// Add protocol information
 				result.Protocol = protocol
 
-				// Only scan in detail if port is open
+				// only scan in detail if port is open
 				if result.State == "open" {
-					// Print open ports immediately
-					fmt.Printf("Open %s:%d\n", ip, port)
+					// print open ports immediately with [+] format
+					fmt.Printf("[+] Open %s:%d (%s)\n", ip, port, result.Service)
 
 					if options.BannerGrab || options.ServiceDetection {
-						result = s.ScanPort(protocol, port)
+						// Keep the open state by setting it explicitly
+						detailedResult := s.ScanPort(protocol, port)
+						// Preserve the open state from the fast scan
+						detailedResult.State = "open"
+						result = detailedResult
+
+						// Display additional information if banner or service info was found
+						if result.Banner != "" || result.Version != "" {
+							if result.Banner != "" {
+								fmt.Printf("    Banner: %s\n", strings.Split(result.Banner, "\n")[0])
+							}
+							if result.Version != "" {
+								fmt.Printf("    Version: %s\n", result.Version)
+							}
+						}
 					}
 					openPorts = append(openPorts, result.Port)
 				}
@@ -142,40 +148,38 @@ func performSingleHostScan(target string, startPort, endPort int, options scanne
 				results = append(results, result)
 			}
 		} else {
-			// Use ultra-fast port range scanning
+			// use ultra-fast port range scanning
 			results = s.ScanRange(protocol, startPort, endPort)
 
-			// Extract open ports and print them immediately
+			// extract open ports and print them immediately
 			for _, result := range results {
 				if result.State == "open" {
 					openPorts = append(openPorts, result.Port)
-					// Print open ports immediately
-					fmt.Printf("Open %s:%d\n", ip, result.Port)
+					// print open ports immediately with [+] format
+					fmt.Printf("[+] Open %s:%d (%s)\n", ip, result.Port, result.Service)
 				}
 			}
 		}
 
-		// Calculate and print scan time
+		// calculate and print scan time
 		scanDuration := time.Since(startTime)
 		if verbose {
 			fmt.Printf("Port scan completed in %.2f seconds\n", scanDuration.Seconds())
 		}
 
-		// Only show results if we found open ports
-		if len(openPorts) > 0 {
-			printPortScanResults(target, ip, results)
-		}
+		// always print results, even if we didn't find open ports
+		printPortScanResults(target, ip, results)
 
-		// Run Nmap on open ports if auto-nmap is enabled
+		// run Nmap on open ports if auto-nmap is enabled
 		// always run Nmap by default unless disabled
 		if (autoNmap || !options.Verbose) && len(openPorts) > 0 {
 			fmt.Printf("[~] Starting Script(s)\n")
 			runNmapOnOpenPorts(ip, openPorts, nmapFlags)
 		}
 	} else {
-		// For host discovery mode, we need to use the specified ports
+		// for host discovery mode, we need to use the specified ports
 		if len(portsToScan) > 0 {
-			// Manually scan the specified ports
+			// manually scan the specified ports
 			results = make([]scanner.ScanResult, 0, len(portsToScan))
 			for _, port := range portsToScan {
 				result := s.UltraFastScanPort(ip, port)
@@ -183,7 +187,21 @@ func performSingleHostScan(target string, startPort, endPort int, options scanne
 
 				if result.State == "open" {
 					if options.BannerGrab || options.ServiceDetection {
-						result = s.ScanPort(protocol, port)
+						// Keep the open state by setting it explicitly
+						detailedResult := s.ScanPort(protocol, port)
+						// Preserve the open state from the fast scan
+						detailedResult.State = "open"
+						result = detailedResult
+
+						// Display additional information if banner or service info was found
+						if result.Banner != "" || result.Version != "" {
+							if result.Banner != "" {
+								fmt.Printf("    Banner: %s\n", strings.Split(result.Banner, "\n")[0])
+							}
+							if result.Version != "" {
+								fmt.Printf("    Version: %s\n", result.Version)
+							}
+						}
 					}
 					openPorts = append(openPorts, result.Port)
 				}
@@ -191,28 +209,28 @@ func performSingleHostScan(target string, startPort, endPort int, options scanne
 				results = append(results, result)
 			}
 
-			// Calculate and print scan time
+			// calculate and print scan time
 			scanDuration := time.Since(startTime)
 			fmt.Printf("Host scan completed in %.2f seconds\n", scanDuration.Seconds())
 
 			printPortScanResults(target, ip, results)
 		} else {
-			// Use the full host scan with all ports
+			// use the full host scan with all ports
 			hostResult := s.ScanHost()
 
-			// Calculate and print scan time
+			// calculate and print scan time
 			scanDuration := time.Since(startTime)
 			fmt.Printf("Host scan completed in %.2f seconds\n", scanDuration.Seconds())
 
 			printDetailedHostResult(hostResult)
 
-			// Extract open ports
+			// extract open ports
 			for _, result := range hostResult.OpenPorts {
 				openPorts = append(openPorts, result.Port)
 			}
 		}
 
-		// Run Nmap on open ports if auto-nmap is enabled
+		// run Nmap on open ports if auto-nmap is enabled
 		if autoNmap && len(openPorts) > 0 {
 			fmt.Printf("\nNmap scan on %d open ports...\n", len(openPorts))
 			runNmapOnOpenPorts(ip, openPorts, nmapFlags)
@@ -220,9 +238,9 @@ func performSingleHostScan(target string, startPort, endPort int, options scanne
 	}
 }
 
-// Performs a scan on multiple hosts with optimizations
+// perform a scan on multiple hosts with optimizations
 func performMultiHostScan(targets []string, startPort, endPort int, options scanner.ScanOption) {
-	// Use the exact ports list from options if available
+	// use the exact ports list from options if available
 	portsToScan := options.Ports
 	numPorts := len(portsToScan)
 	if numPorts == 0 {
@@ -234,7 +252,7 @@ func performMultiHostScan(targets []string, startPort, endPort int, options scan
 	}
 	totalStartTime := time.Now()
 
-	// Limit output for large scans
+	// limit output for large scans
 	maxHostsToDisplay := 5
 	if len(targets) < maxHostsToDisplay {
 		maxHostsToDisplay = len(targets)
@@ -259,24 +277,38 @@ func performMultiHostScan(targets []string, startPort, endPort int, options scan
 		var openPorts []int
 
 		if skipHostDiscovery {
-			// Use user-specified ports if available
+			// use user-specified ports if available
 			if len(portsToScan) > 0 {
-				// Scan only the user-specified ports
+				// scan only the user-specified ports
 				results = make([]scanner.ScanResult, 0, len(portsToScan))
 				for _, port := range portsToScan {
-					// Always use the ultra-fast scan for initial detection
+					// always use the ultra-fast scan for initial detection
 					result := s.UltraFastScanPort(ip, port)
 
 					// Add protocol information
 					result.Protocol = protocol
 
-					// Only scan in detail if port is open
+					// only scan in detail if port is open
 					if result.State == "open" {
-						// Print open ports immediately
-						fmt.Printf("Open %s:%d\n", ip, port)
+						// print open ports immediately with [+] format
+						fmt.Printf("[+] Open %s:%d (%s)\n", ip, port, result.Service)
 
 						if options.BannerGrab || options.ServiceDetection {
-							result = s.ScanPort(protocol, port)
+							// Keep the open state by setting it explicitly
+							detailedResult := s.ScanPort(protocol, port)
+							// Preserve the open state from the fast scan
+							detailedResult.State = "open"
+							result = detailedResult
+
+							// Display additional information if banner or service info was found
+							if result.Banner != "" || result.Version != "" {
+								if result.Banner != "" {
+									fmt.Printf("    Banner: %s\n", strings.Split(result.Banner, "\n")[0])
+								}
+								if result.Version != "" {
+									fmt.Printf("    Version: %s\n", result.Version)
+								}
+							}
 						}
 						openPorts = append(openPorts, result.Port)
 					}
@@ -284,43 +316,40 @@ func performMultiHostScan(targets []string, startPort, endPort int, options scan
 					results = append(results, result)
 				}
 			} else {
-				// Use ultra-fast port range scanning
+				// use ultra-fast port range scanning
 				results = s.ScanRange(protocol, startPort, endPort)
 
-				// Extract open ports and print them immediately
+				// extract open ports and print them immediately
 				for _, result := range results {
 					if result.State == "open" {
 						openPorts = append(openPorts, result.Port)
-						// Print open ports immediately
-						fmt.Printf("Open %s:%d\n", ip, result.Port)
+						// print open ports immediately with [+] format
+						fmt.Printf("[+] Open %s:%d (%s)\n", ip, result.Port, result.Service)
 					}
 				}
 			}
 
-			// Calculate and print scan time
+			// calculate and print scan time
 			hostScanDuration := time.Since(hostStartTime)
 			if verbose {
 				fmt.Printf("Port scan completed in %.2f seconds\n", hostScanDuration.Seconds())
 				fmt.Printf("Scan rate: ~%.0f ports/second\n", float64(numPorts)/hostScanDuration.Seconds())
 			}
 
-			// Only show results if not too many hosts or if we have open ports
-			if verbose && (i < maxHostsToDisplay || len(openPorts) > 0) {
+			// Always print summary results if we have open ports
+			if len(openPorts) > 0 || verbose {
 				printPortScanResults(targets[i], ip, results)
-			} else if verbose && i == maxHostsToDisplay {
-				fmt.Printf("Output limited for remaining %d hosts. Use --output-file for complete results.\n",
-					len(targets)-maxHostsToDisplay)
 			}
 
-			// Run Nmap on open ports
+			// run Nmap on open ports if auto-nmap is enabled
 			if (autoNmap || !options.Verbose) && len(openPorts) > 0 {
 				fmt.Printf("[~] Starting Script(s)\n")
 				runNmapOnOpenPorts(ip, openPorts, nmapFlags)
 			}
 		} else {
-			// For host discovery mode, we need to use the specified ports
+			// for host discovery mode, we need to use the specified ports
 			if len(portsToScan) > 0 {
-				// Manually scan the specified ports
+				// manually scan the specified ports
 				results = make([]scanner.ScanResult, 0, len(portsToScan))
 				for _, port := range portsToScan {
 					result := s.UltraFastScanPort(ip, port)
@@ -328,7 +357,21 @@ func performMultiHostScan(targets []string, startPort, endPort int, options scan
 
 					if result.State == "open" {
 						if options.BannerGrab || options.ServiceDetection {
-							result = s.ScanPort(protocol, port)
+							// Keep the open state by setting it explicitly
+							detailedResult := s.ScanPort(protocol, port)
+							// Preserve the open state from the fast scan
+							detailedResult.State = "open"
+							result = detailedResult
+
+							// Display additional information if banner or service info was found
+							if result.Banner != "" || result.Version != "" {
+								if result.Banner != "" {
+									fmt.Printf("    Banner: %s\n", strings.Split(result.Banner, "\n")[0])
+								}
+								if result.Version != "" {
+									fmt.Printf("    Version: %s\n", result.Version)
+								}
+							}
 						}
 						openPorts = append(openPorts, result.Port)
 					}
@@ -336,26 +379,23 @@ func performMultiHostScan(targets []string, startPort, endPort int, options scan
 					results = append(results, result)
 				}
 
-				// Calculate and print scan time
+				// calculate and print scan time
 				hostScanDuration := time.Since(hostStartTime)
 				fmt.Printf("Host scan completed in %.2f seconds\n", hostScanDuration.Seconds())
 
-				// Only show results if not too many hosts or if we have open ports
-				if i < maxHostsToDisplay || len(openPorts) > 0 {
+				// Always print summary results if we have open ports
+				if len(openPorts) > 0 || verbose {
 					printPortScanResults(targets[i], ip, results)
-				} else if i == maxHostsToDisplay {
-					fmt.Printf("Output limited for remaining %d hosts. Use --output-file for complete results.\n",
-						len(targets)-maxHostsToDisplay)
 				}
 			} else {
-				// Use the full host scan with all ports
+				// use the full host scan with all ports
 				hostResult := s.ScanHost()
 
-				// Calculate and print scan time
+				// calculate and print scan time
 				hostScanDuration := time.Since(hostStartTime)
 				fmt.Printf("Host scan completed in %.2f seconds\n", hostScanDuration.Seconds())
 
-				// Only show results if not too many hosts or if we have open ports
+				// only show results if not too many hosts or if we have open ports
 				if i < maxHostsToDisplay || len(hostResult.OpenPorts) > 0 {
 					printDetailedHostResult(hostResult)
 				} else if i == maxHostsToDisplay {
@@ -363,13 +403,13 @@ func performMultiHostScan(targets []string, startPort, endPort int, options scan
 						len(targets)-maxHostsToDisplay)
 				}
 
-				// Extract open ports
+				// extract open ports
 				for _, result := range hostResult.OpenPorts {
 					openPorts = append(openPorts, result.Port)
 				}
 			}
 
-			// Run Nmap on open ports if auto-nmap is enabled
+			// run Nmap on open ports if auto-nmap is enabled
 			if autoNmap && len(openPorts) > 0 {
 				fmt.Printf("\nNmap scan on %d open ports...\n", len(openPorts))
 				runNmapOnOpenPorts(ip, openPorts, nmapFlags)
@@ -377,7 +417,7 @@ func performMultiHostScan(targets []string, startPort, endPort int, options scan
 		}
 	}
 
-	// Print total scan time if verbose
+	// print total scan time if verbose
 	if verbose {
 		totalScanDuration := time.Since(totalStartTime)
 		fmt.Printf("\nTotal scan time for %d hosts: %.2f seconds\n", len(targets), totalScanDuration.Seconds())
@@ -389,7 +429,7 @@ func performMultiHostScan(targets []string, startPort, endPort int, options scan
 	}
 }
 
-// Handles scanning with the nmap binary
+// handles scanning with the nmap binary
 func runNmapScan(targetStr string, nmapArgs []string) {
 	fmt.Println("Using nmap for advanced scanning...")
 
@@ -399,18 +439,18 @@ func runNmapScan(targetStr string, nmapArgs []string) {
 		os.Exit(1)
 	}
 
-	// Print results
+	// print results
 	printDetailedHostResult(hostResult)
 }
 
-// runNmapOnOpenPorts runs nmap on discovered open ports
+// runs nmap on discovered open ports
 func runNmapOnOpenPorts(target string, openPorts []int, customFlags string) {
 	if len(openPorts) == 0 {
 		fmt.Println("No open ports found for Nmap scanning.")
 		return
 	}
 
-	// Convert open ports to port specification string
+	// convert open ports to port specification string
 	portsStr := ""
 	for i, port := range openPorts {
 		if i > 0 {
@@ -421,17 +461,17 @@ func runNmapOnOpenPorts(target string, openPorts []int, customFlags string) {
 
 	fmt.Printf("Running Nmap on %s with %d open ports: %s\n", target, len(openPorts), portsStr)
 
-	// Build nmap arguments
+	// build nmap arguments
 	var nmapArgs []string
 	nmapArgs = append(nmapArgs, "-p", portsStr)
 
-	// Add custom flags if provided
+	// add custom flags if provided
 	if customFlags != "" {
-		// Split the flags string into individual arguments
+		// split the flags string into individual arguments
 		flagArgs := strings.Fields(customFlags)
 		nmapArgs = append(nmapArgs, flagArgs...)
 	} else {
-		// Default flags for service and script scanning
+		// default flags for service and script scanning
 		nmapArgs = append(nmapArgs, "-sC", "-sV")
 	}
 
@@ -441,8 +481,6 @@ func runNmapOnOpenPorts(target string, openPorts []int, customFlags string) {
 		return
 	}
 
-	// Print detailed results
+	// print detailed results
 	printDetailedHostResult(hostResult)
 }
-
-// printDetailedHostResult prints the details of a host scan

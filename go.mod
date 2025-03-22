@@ -1,3 +1,4 @@
+// GoScanner v1.0.0 - Ultra-fast port scanner written in Go
 module github.com/supakornn/goscanner
 
 go 1.21

@@ -1,8 +1,8 @@
 package scanner
 
-// detectOS attempts to detect the operating system of the target
+// attempts to detect the operating system of the target
 func (s *Scanner) detectOS() (string, int) {
-	// Simplified OS detection based on open ports
+	//  OS detection based on open ports
 	windowsPorts := []int{135, 139, 445, 3389}
 	linuxPorts := []int{22, 111, 2049}
 

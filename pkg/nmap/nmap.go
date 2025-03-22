@@ -1,10 +1,9 @@
+// Package nmap provides functions for integrating with the Nmap security scanner
 package nmap
 
 import (
-	"bytes"
 	"encoding/xml"
 	"fmt"
-	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -13,13 +12,13 @@ import (
 	"github.com/supakornn/goscanner/pkg/scanner"
 )
 
-// NmapRun represents the root of nmap XML output
+// represents the root of nmap XML output
 type NmapRun struct {
 	XMLName xml.Name   `xml:"nmaprun"`
 	Hosts   []NmapHost `xml:"host"`
 }
 
-// NmapHost represents a host in nmap XML output
+// represents a host in nmap XML output
 type NmapHost struct {
 	Status NmapStatus `xml:"status"`
 	Addr   NmapAddr   `xml:"address"`
@@ -27,23 +26,23 @@ type NmapHost struct {
 	Os     NmapOs     `xml:"os"`
 }
 
-// NmapStatus represents host status
+// represents host status
 type NmapStatus struct {
 	State string `xml:"state,attr"`
 }
 
-// NmapAddr represents a host address
+// represents a host address
 type NmapAddr struct {
 	Addr     string `xml:"addr,attr"`
 	AddrType string `xml:"addrtype,attr"`
 }
 
-// NmapPorts represents a collection of ports
+// represents a collection of ports
 type NmapPorts struct {
 	Ports []NmapPort `xml:"port"`
 }
 
-// NmapPort represents a port
+// represents a port
 type NmapPort struct {
 	Protocol string      `xml:"protocol,attr"`
 	PortID   int         `xml:"portid,attr"`
@@ -51,90 +50,118 @@ type NmapPort struct {
 	Service  NmapService `xml:"service"`
 }
 
-// NmapState represents port state
+// represents port state
 type NmapState struct {
 	State string `xml:"state,attr"`
 }
 
-// NmapService represents service information
+// represents service information
 type NmapService struct {
 	Name    string `xml:"name,attr"`
 	Product string `xml:"product,attr"`
 	Version string `xml:"version,attr"`
 }
 
-// NmapOs represents OS detection information
+// represents OS detection information
 type NmapOs struct {
 	OsMatches []NmapOsMatch `xml:"osmatch"`
 }
 
-// NmapOsMatch represents an OS match
+// represents an OS match
 type NmapOsMatch struct {
 	Name     string `xml:"name,attr"`
 	Accuracy string `xml:"accuracy,attr"`
 }
 
-// RunNmap executes nmap with the given arguments
+// runs nmap
 func RunNmap(target string, args []string) (*scanner.HostResult, error) {
-	// Check if nmap is available
-	if !isNmapAvailable() {
-		return nil, fmt.Errorf("nmap is not installed or not in the path")
+	// validate target
+	if target == "" && !containsTarget(args) {
+		return nil, fmt.Errorf("target is required for nmap scan")
 	}
 
-	// Prepare the command
-	allArgs := append([]string{"-oX", "-"}, args...)
-	if target != "" && !containsTarget(args) {
-		allArgs = append(allArgs, target)
-	}
-
-	cmd := exec.Command("nmap", allArgs...)
-
-	// Capture stdout and stderr
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	// Run the command
-	fmt.Println("Executing nmap:", cmd.String())
-	startTime := time.Now()
-	err := cmd.Run()
-
-	// Print any stderr output for debugging
-	if stderr.Len() > 0 {
-		fmt.Fprintln(os.Stderr, "Nmap stderr output:")
-		fmt.Fprintln(os.Stderr, stderr.String())
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to run nmap: %v", err)
-	}
-
-	// Convert XML output to our format
-	hostResult, err := parseNmapXML(stdout.Bytes(), time.Since(startTime))
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse nmap output: %v", err)
-	}
-
-	return hostResult, nil
-}
-
-// isNmapAvailable checks if nmap is installed and available
-func isNmapAvailable() bool {
+	// check if nmap is installed
 	_, err := exec.LookPath("nmap")
-	return err == nil
+	if err != nil {
+		return nil, fmt.Errorf("nmap is not installed or not in the PATH")
+	}
+
+	// start with basic arguments
+	finalArgs := []string{"-oX", "-"} // output XML to stdout
+
+	// add any user-specified arguments first
+	finalArgs = append(finalArgs, args...)
+
+	// always add the target at the end if it's not empty
+	if target != "" && !containsTarget(args) {
+		finalArgs = append(finalArgs, target)
+	}
+
+	// print command for user reference
+	fmt.Println("\nRunning nmap:", "nmap", strings.Join(finalArgs, " "))
+	fmt.Println("----------------------------------------------------")
+
+	// configure the command
+	startTime := time.Now()
+	cmd := exec.Command("nmap", finalArgs...)
+
+	// capture stdout for XML parsing
+	output, err := cmd.Output()
+	if err != nil {
+		// handle error more gracefully, still print stderr
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			fmt.Println(string(exitErr.Stderr))
+		}
+		return nil, fmt.Errorf("error executing nmap: %v", err)
+	}
+
+	// calculate duration
+	duration := time.Since(startTime)
+
+	// parse the XML output
+	result, err := parseNmapXML(output, duration)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing nmap output: %v", err)
+	}
+
+	return result, nil
 }
 
-// containsTarget checks if target is already included in args
+// helper function to check if a target is already in the args
 func containsTarget(args []string) bool {
-	for _, arg := range args {
+	// common nmap args that take additional parameters (not targets)
+	nonTargetArgs := map[string]bool{
+		"-p": true, "--ports": true,
+		"-iL": true, "--input-filename": true,
+		"-oA": true, "-oN": true, "-oX": true, "-oG": true, "-oS": true,
+		"--script": true, "--script-args": true,
+		"-D": true, "--proxies": true,
+		"-e": true, "--source-port": true,
+	}
+
+	for i, arg := range args {
+		// skip this arg if it's a flag that takes a parameter
+		if nonTargetArgs[arg] && i < len(args)-1 {
+			i++ // skip the next item too as it's the parameter
+			continue
+		}
+
+		// if the arg doesn't start with - and isn't a parameter for a previous flag
 		if !strings.HasPrefix(arg, "-") {
-			return true
+			prev := ""
+			if i > 0 {
+				prev = args[i-1]
+			}
+			if !nonTargetArgs[prev] {
+				return true
+			}
 		}
 	}
+
 	return false
 }
 
-// parseNmapXML converts nmap XML output to our HostResult format
+// converts nmap XML output to our HostResult format
 func parseNmapXML(xmlData []byte, duration time.Duration) (*scanner.HostResult, error) {
 	var nmapRun NmapRun
 	if err := xml.Unmarshal(xmlData, &nmapRun); err != nil {
@@ -146,15 +173,15 @@ func parseNmapXML(xmlData []byte, duration time.Duration) (*scanner.HostResult, 
 		RTT:    duration,
 	}
 
-	// Process only the first host (we expect only one in most cases)
+	// process only the first host (we expect only one in most cases)
 	if len(nmapRun.Hosts) > 0 {
 		host := nmapRun.Hosts[0]
 
-		// Use host info
+		// use host info
 		result.IP = host.Addr.Addr
 		result.Status = host.Status.State
 
-		// Parse ports
+		// parse ports
 		for _, port := range host.Ports.Ports {
 			if port.State.State == "open" {
 				scanResult := scanner.ScanResult{
@@ -164,7 +191,7 @@ func parseNmapXML(xmlData []byte, duration time.Duration) (*scanner.HostResult, 
 					Service:  port.Service.Name,
 				}
 
-				// Combine product and version if available
+				// combine product and version if available
 				if port.Service.Product != "" {
 					if port.Service.Version != "" {
 						scanResult.Version = port.Service.Product + " " + port.Service.Version
@@ -177,14 +204,14 @@ func parseNmapXML(xmlData []byte, duration time.Duration) (*scanner.HostResult, 
 			}
 		}
 
-		// Parse OS detection
+		// parse OS detection
 		if len(host.Os.OsMatches) > 0 {
 			result.OS = host.Os.OsMatches[0].Name
 			accuracy, _ := strconv.Atoi(host.Os.OsMatches[0].Accuracy)
 			result.OSAccuracy = accuracy
 		}
 
-		// We found a host, mark it as up
+		// found a host, mark it as up
 		if len(result.OpenPorts) > 0 {
 			result.Status = "up"
 		}

@@ -30,7 +30,7 @@ Examples:
 }
 
 func main() {
-	// Parse command line flags with standard flag package
+	// Define command-line flags
 	var (
 		showHelp   = flag.Bool("help", false, "Show help")
 		shortHelp  = flag.Bool("h", false, "Show help")
@@ -71,7 +71,7 @@ func main() {
 	fmt.Printf("Scanning %s (ports: %s)...\n", target, ports)
 	startTime := time.Now()
 
-	// Extract start and end port from range - simplified for this example
+	// Extract start and end port from range
 	startPort, endPort := 1, 1000
 
 	s := scanner.New(target, time.Duration(timeoutValue)*time.Millisecond, concurrentValue)

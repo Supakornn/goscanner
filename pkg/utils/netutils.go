@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Host represents a host with IP and MAC address
+// host with IP and MAC address
 type Host struct {
 	IP       string
 	MAC      string
@@ -17,7 +17,7 @@ type Host struct {
 	Vendor   string
 }
 
-// DiscoverHosts discovers hosts on the local network
+// discover hosts on the local network
 func DiscoverHosts(cidr string) ([]Host, error) {
 	_, ipnet, err := net.ParseCIDR(cidr)
 	if err != nil {
@@ -50,7 +50,7 @@ func DiscoverHosts(cidr string) ([]Host, error) {
 	return filteredHosts, nil
 }
 
-// arpScanWindows performs an ARP scan on Windows
+// arp scan on Windows
 func arpScanWindows() ([]Host, error) {
 	var hosts []Host
 
@@ -76,7 +76,7 @@ func arpScanWindows() ([]Host, error) {
 	return hosts, nil
 }
 
-// arpScanMac performs an ARP scan on macOS
+// arp scan on macOS
 func arpScanMac() ([]Host, error) {
 	var hosts []Host
 
@@ -113,7 +113,7 @@ func arpScanMac() ([]Host, error) {
 	return hosts, nil
 }
 
-// arpScanLinux performs an ARP scan on Linux
+// arp scan on Linux
 func arpScanLinux() ([]Host, error) {
 	var hosts []Host
 
@@ -158,7 +158,7 @@ func arpScanLinux() ([]Host, error) {
 	return hosts, nil
 }
 
-// TCPPortState checks if a TCP port is open
+// checks if a TCP port is open
 func TCPPortState(ip string, port int, timeout time.Duration) (string, time.Duration) {
 	start := time.Now()
 	conn, err := net.DialTimeout("tcp", net.JoinHostPort(ip, fmt.Sprintf("%d", port)), timeout)
@@ -175,7 +175,7 @@ func TCPPortState(ip string, port int, timeout time.Duration) (string, time.Dura
 	return "open", elapsed
 }
 
-// UDPPortState checks if a UDP port is open
+// checks if a UDP port is open
 func UDPPortState(ip string, port int, timeout time.Duration) (string, time.Duration) {
 	start := time.Now()
 	conn, err := net.DialTimeout("udp", net.JoinHostPort(ip, fmt.Sprintf("%d", port)), timeout)
@@ -189,7 +189,7 @@ func UDPPortState(ip string, port int, timeout time.Duration) (string, time.Dura
 	return "open|filtered", elapsed
 }
 
-// TraceRoute performs a traceroute to the target
+// trace route to the target
 func TraceRoute(target string, maxHops int) ([]string, error) {
 	var cmd *exec.Cmd
 
