@@ -2,39 +2,45 @@ package scanner
 
 import (
 	"net"
-	"regexp"
+	"strings"
 )
 
 // canUseICMP checks if ICMP is available
 func canUseICMP() bool {
+	// In a real implementation, this would check for proper permissions
 	return true
 }
 
 // detectServiceVersion attempts to detect the service version from banner
 func detectServiceVersion(service, banner string) string {
-	if banner == "" {
-		return ""
+	// Simple version detection based on banner
+	// In a real implementation, this would use regex patterns for each service
+	if service == "http" || service == "https" {
+		if strings.Contains(banner, "Apache") {
+			return extractVersion(banner, "Apache/")
+		} else if strings.Contains(banner, "nginx") {
+			return extractVersion(banner, "nginx/")
+		} else if strings.Contains(banner, "IIS") {
+			return extractVersion(banner, "IIS/")
+		}
+	} else if service == "ssh" {
+		return strings.TrimSpace(strings.Split(banner, "\n")[0])
 	}
+	return ""
+}
 
-	patterns := map[string]string{
-		"SSH":    `SSH-\d+\.\d+-([\w\._-]+)`,
-		"HTTP":   `Server: ([^\r\n]+)`,
-		"SMTP":   `^220 [^ ]+ ESMTP ([^\r\n]+)`,
-		"FTP":    `^220 [^ ]+ FTP [^ ]+ ([^\r\n]+)`,
-		"POP3":   `^+OK [^ ]+ ([^\r\n]+)`,
-		"IMAP":   `^\* OK [^<]*<([^>]+)>`,
-		"MySQL":  `^.\x00\x00\x00\x0a(\d+\.\d+\.\d+)`,
-		"Telnet": `^([\w\._-]+) telnetd`,
-	}
-
-	if pattern, ok := patterns[service]; ok {
-		re := regexp.MustCompile(pattern)
-		matches := re.FindStringSubmatch(banner)
-		if len(matches) > 1 {
-			return matches[1]
+// extractVersion extracts version number from a banner
+func extractVersion(banner, prefix string) string {
+	if idx := strings.Index(banner, prefix); idx >= 0 {
+		start := idx + len(prefix)
+		end := start
+		for end < len(banner) && (banner[end] != ' ' && banner[end] != '\r' && banner[end] != '\n') {
+			end++
+		}
+		if start < end {
+			return banner[start:end]
 		}
 	}
-
 	return ""
 }
 
@@ -84,86 +90,82 @@ func getCommonPorts(count int) []int {
 	return commonPorts[:count]
 }
 
-// getServiceName returns the service name for a port
+// getServiceName returns a service name for a given port
 func getServiceName(port int) string {
-	services := map[int]string{
-		20:    "FTP-data",
-		21:    "FTP",
-		22:    "SSH",
-		23:    "Telnet",
-		25:    "SMTP",
-		53:    "DNS",
-		67:    "DHCP",
-		68:    "DHCP",
-		69:    "TFTP",
-		80:    "HTTP",
-		88:    "Kerberos",
-		110:   "POP3",
-		111:   "RPC",
-		119:   "NNTP",
-		123:   "NTP",
-		135:   "MSRPC",
-		137:   "NetBIOS-ns",
-		138:   "NetBIOS-dgm",
-		139:   "NetBIOS-ssn",
-		143:   "IMAP",
-		161:   "SNMP",
-		162:   "SNMP-trap",
-		389:   "LDAP",
-		443:   "HTTPS",
-		445:   "SMB",
-		464:   "Kerberos",
-		465:   "SMTPS",
-		500:   "IKE",
-		514:   "Syslog",
-		515:   "LPD",
-		520:   "RIP",
-		587:   "SMTP",
-		636:   "LDAPS",
-		993:   "IMAPS",
-		995:   "POP3S",
-		1080:  "SOCKS",
-		1194:  "OpenVPN",
-		1433:  "MSSQL",
-		1434:  "MSSQL-admin",
-		1521:  "Oracle",
-		1723:  "PPTP",
-		1812:  "RADIUS",
-		2049:  "NFS",
-		2082:  "cPanel",
-		2083:  "cPanel-SSL",
-		2086:  "WHM",
-		2087:  "WHM-SSL",
-		2095:  "Webmail",
-		2096:  "Webmail-SSL",
-		3306:  "MySQL",
-		3389:  "RDP",
-		5060:  "SIP",
-		5061:  "SIP-TLS",
-		5432:  "PostgreSQL",
-		5666:  "NRPE",
-		5900:  "VNC",
-		5901:  "VNC-1",
-		5902:  "VNC-2",
-		5903:  "VNC-3",
-		6379:  "Redis",
-		6667:  "IRC",
-		8000:  "HTTP-alt",
-		8080:  "HTTP-proxy",
-		8443:  "HTTPS-alt",
-		8888:  "HTTP-alt",
-		9100:  "Printer",
-		9200:  "Elasticsearch",
-		9418:  "Git",
-		9999:  "HTTP-alt",
-		27017: "MongoDB",
-		49152: "Windows-RPC",
-		49153: "Windows-RPC",
-		49154: "Windows-RPC",
+	// Common TCP services
+	switch port {
+	case 20, 21:
+		return "ftp"
+	case 22:
+		return "ssh"
+	case 23:
+		return "telnet"
+	case 25:
+		return "smtp"
+	case 53:
+		return "domain"
+	case 80:
+		return "http"
+	case 110:
+		return "pop3"
+	case 111:
+		return "rpcbind"
+	case 135:
+		return "msrpc"
+	case 139:
+		return "netbios-ssn"
+	case 143:
+		return "imap"
+	case 443:
+		return "https"
+	case 445:
+		return "microsoft-ds"
+	case 993:
+		return "imaps"
+	case 995:
+		return "pop3s"
+	case 1723:
+		return "pptp"
+	case 2121:
+		return "ccproxy-ftp"
+	case 3306:
+		return "mysql"
+	case 3389:
+		return "ms-wbt-server"
+	case 5432:
+		return "postgresql"
+	case 8080:
+		return "http-proxy"
+	case 8443:
+		return "https-alt"
+	default:
+		return "unknown"
 	}
+}
 
-	if service, ok := services[port]; ok {
-		return service
+// getUDPServiceName returns a service name for a UDP port
+func getUDPServiceName(port int) string {
+	// Add special handling for common UDP services
+	switch port {
+	case 53:
+		return "domain"
+	case 67, 68:
+		return "dhcp"
+	case 69:
+		return "tftp"
+	case 123:
+		return "ntp"
+	case 161:
+		return "snmp"
+	case 500:
+		return "isakmp"
+	case 514:
+		return "syslog"
+	case 520:
+		return "route"
+	case 1900:
+		return "upnp"
+	default:
+		return getServiceName(port) // Fall back to generic service name
 	}
-	return "unknown"
 }
