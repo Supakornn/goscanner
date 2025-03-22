@@ -38,7 +38,24 @@
 go install github.com/supakornn/goscanner@latest
 
 # Or specify a version
-go install github.com/supakornn/goscanner@v.1.0
+go install github.com/supakornn/goscanner@v1.0.0
+```
+
+### Setting up PATH
+
+After installation, make sure your Go binary directory is in your PATH:
+
+```bash
+# For Bash users (add to ~/.bashrc)
+echo 'export PATH=$PATH:'"$(go env GOPATH)"'/bin' >> ~/.bashrc
+source ~/.bashrc
+
+# For Zsh users (add to ~/.zshrc)
+echo 'export PATH=$PATH:'"$(go env GOPATH)"'/bin' >> ~/.zshrc
+source ~/.zshrc
+
+# Verify installation
+goscanner -h
 ```
 
 ### From Source
