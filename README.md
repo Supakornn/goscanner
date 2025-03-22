@@ -38,7 +38,7 @@
 go install github.com/supakornn/goscanner@latest
 
 # Or specify a version
-go install github.com/supakornn/goscanner@v1.0.0
+go install github.com/supakornn/goscanner@v.1.0
 ```
 
 ### Setting up PATH
