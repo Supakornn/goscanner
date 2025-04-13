@@ -1,4 +1,4 @@
-# GoScanner
+# Goscanner
 
 <p align="center">
   <img src="./assets/img.png" width="200" alt="GoScanner Logo">
