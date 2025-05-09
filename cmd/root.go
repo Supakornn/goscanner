@@ -66,7 +66,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "goscanner [flags] [target] [-- nmap-flags...]",
 	Short: "A powerful port scanner written in Go",
-	Long:  `GoScanner is an ultra-fast, high-performance port scanner built in Go.`,
+	Long:  `GoScanner is an high-performance port scanner built in Go.`,
 
 	Args: func(cmd *cobra.Command, args []string) error {
 		// check for -- separator which indicates nmap mode
