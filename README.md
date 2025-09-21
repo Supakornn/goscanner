@@ -5,7 +5,6 @@
 <p align="center">
   <a href="#installation">Installation</a> •
   <a href="#usage">Usage</a> •
-  <a href="#command-line-options">Command Line Options</a> •
   <a href="#contributing">Contributing</a>
 </p>
 
@@ -59,9 +58,9 @@ This project is licensed under the GNU General Public License v3.0 (GPL-3.0) - s
 
 Inspired by:
 
--   [Nmap](https://nmap.org/) - The industry standard in network scanning
--   [RustScan](https://github.com/RustScan/RustScan) - The modern port scanner
--   [Masscan](https://github.com/robertdavidgraham/masscan) - TCP port scanner for mass scanning
+- [Nmap](https://nmap.org/) - The industry standard in network scanning
+- [RustScan](https://github.com/RustScan/RustScan) - The modern port scanner
+- [Masscan](https://github.com/robertdavidgraham/masscan) - TCP port scanner for mass scanning
 
 ## Disclaimer
 
