@@ -1,6 +1,4 @@
-# Goscanner
-
-<p align="center" style="font-size: 30px; font-weight: bold;">A Port scanner written in Go.</p>
+# Goscanner - A Port scanner written in Go.
 
 ## Installation
 
