@@ -1,21 +1,20 @@
 # Goscanner
 
-<p align="center" style="font-size: 50px; font-weight: bold;">A Port scanner written in Go.</p>
-
-<p align="center">
-  <a href="#installation">Installation</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#contributing">Contributing</a>
-</p>
+<p align="center" style="font-size: 30px; font-weight: bold;">A Port scanner written in Go.</p>
 
 ## Installation
 
 ```bash
 # Install the latest version
 go install github.com/supakornn/goscanner@latest
+```
 
-# Or specify a version
-go install github.com/supakornn/goscanner@v.1.0
+## Build from source
+
+```bash
+git clone https://github.com/supakornn/goscanner.git
+cd goscanner
+go build -o goscanner
 ```
 
 ## Usage
@@ -25,6 +24,9 @@ GoScanner is a high-performance network port scanner built in Go.
 
 Usage:
   goscanner [flags] [target] [-- nmap-flags...]
+
+Show help:
+    goscanner -h
 
 Examples:
   # Basic scan of a single host
@@ -40,27 +42,13 @@ Examples:
   goscanner 192.168.1.1 -- -A -sV -sC
 ```
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the GNU General Public License v3.0 (GPL-3.0) - see the LICENSE file for details.
-
 ## Acknowledgements
 
 Inspired by:
 
-- [Nmap](https://nmap.org/) - The industry standard in network scanning
-- [RustScan](https://github.com/RustScan/RustScan) - The modern port scanner
-- [Masscan](https://github.com/robertdavidgraham/masscan) - TCP port scanner for mass scanning
+-   [Nmap](https://nmap.org/) - The industry standard in network scanning
+-   [RustScan](https://github.com/RustScan/RustScan) - The modern port scanner
+-   [Masscan](https://github.com/robertdavidgraham/masscan) - TCP port scanner for mass scanning
 
 ## Disclaimer
 
