@@ -1,6 +1,6 @@
 # Goscanner
 
-<p align="center" style="font-size: 18px; font-weight: bold;">A Port scanner written in Go.</p>
+<p align="center" style="font-size: 22px; font-weight: bold;">A Port scanner written in Go.</p>
 
 <p align="center">
   <a href="#installation">Installation</a> •
